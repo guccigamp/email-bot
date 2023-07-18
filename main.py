@@ -6,6 +6,9 @@ from email.mime.text import MIMEText
 import pandas
 import json
 
+with open(file="/Users/aagamshah/Documents/Email Bot/config.json", mode="r") as f:
+    data = json.load(f)
+
 
 # <--------------------------------Mail Merge----------------------------->
 class Mail_Merge:
@@ -62,8 +65,11 @@ class Mail_Send:
         self.merger = Mail_Merge(email_template=email, directory=db)
         self.merger.swap()
         # <--------------------Sender's Credentials---------------------------->
-        self.my_email = "example@gmail.com"
-        self.my_password = "your_app_password"
+        self.my_email = data["email"]
+        self.my_password = data["app_password"]
+        self.host = data["host"]
+        self.port = data["port"]
+        self.local_hostname = data["local_hostname"]
         self.subject = subject
 
     def mail_sending(self):

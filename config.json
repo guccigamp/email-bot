@@ -1,4 +1,7 @@
 {
-    "email": "example@example.com",
-    "app_password": "your_app_password"
+    "email": "",
+    "app_password": "",
+    "host": "",
+    "port": "",
+    "local_hostname": ""
 }
