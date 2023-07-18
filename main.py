@@ -4,6 +4,7 @@ from smtplib import SMTP
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import pandas
+import json
 
 
 # <--------------------------------Mail Merge----------------------------->
@@ -12,8 +13,8 @@ class Mail_Merge:
         # Making a separate Dataframe "mail_directory" containing only Founder Names and Company Email Addrs
         data = pandas.read_excel(io=directory)
         self.mail_directory = {
-            "company": data["Company Name"],
-            "names": data["Founder Name"],
+            "company name": data["Company Name"],
+            "founder name": data["Founder Name"],
             "email_id": data["Email"]
         }
         self.mail_directory = pandas.DataFrame(self.mail_directory)
@@ -21,24 +22,35 @@ class Mail_Merge:
         # Reads the mail template
         with open(file=email_template, mode="r") as self.template:
             self.letter_lines = self.template.readlines()
-        self.name_loc = []
+        self.founder_name_loc = []
+        self.company_name_loc = []
 
     def swap(self):
-        # swaps the [name] with name
-        for name in self.mail_directory["names"]:
+
+        for index, contact in self.mail_directory.iterrows():
+            founder_name = str(contact["founder name"])
+            company_name = str(contact["company name"])
             for x in range(len(self.letter_lines)):
-                if "[name]" in self.letter_lines[x]:
-                    self.letter_lines[x] = self.letter_lines[x].replace("[name]", name)
-                    self.name_loc.append(x)
+                # swaps the [Founder Name] with name
+                if "[Founder Name]" in self.letter_lines[x]:
+                    self.letter_lines[x] = self.letter_lines[x].replace("[Founder Name]", founder_name)
+                    self.founder_name_loc.append(x)
+                # swaps the [Company Name] with name
+                if "[Company Name]" in self.letter_lines[x]:
+                    self.letter_lines[x] = self.letter_lines[x].replace("[Company Name]", company_name)
+                    self.company_name_loc.append(x)
 
             # creates and writes the mail designated to each name
-            new_letter = open(file=f"Output/ReadyToSend/{name}.html", mode="w")
+            new_letter = open(file=f"ReadyToSend/{founder_name}.html", mode="w")
             for line in self.letter_lines:
                 new_letter.write(line)
 
-            # swaps the name with [name]
-            for x in self.name_loc:
-                self.letter_lines[x] = self.letter_lines[x].replace(name, "[name]")
+            # swaps the name with [Founder Name]
+            for x in self.founder_name_loc:
+                self.letter_lines[x] = self.letter_lines[x].replace(founder_name, "[Founder Name]")
+            # swaps the name with [Company Name]
+            for x in self.company_name_loc:
+                self.letter_lines[x] = self.letter_lines[x].replace(company_name, "[Company Name]")
 
 
 # <--------------------------------Mail Send----------------------------->
@@ -50,8 +62,8 @@ class Mail_Send:
         self.merger = Mail_Merge(email_template=email, directory=db)
         self.merger.swap()
         # <--------------------Sender's Credentials---------------------------->
-        self.my_email = "shahaagam04@gmail.com"
-        self.my_password = "yljffvmrxosglqvi"
+        self.my_email = "example@gmail.com"
+        self.my_password = "your_app_password"
         self.subject = subject
 
     def mail_sending(self):
@@ -63,22 +75,14 @@ class Mail_Send:
             self.message['To'] = self.to_email
 
             # Create the body of the message (an HTML version).
-            with open(file=f'''ReadyToSend/{contact["names"]}.html''') as self.content:
+            with open(file=f'''ReadyToSend/{contact["founder name"]}.html''') as self.content:
                 self.message.attach(MIMEText(self.content.read(), 'html'))
 
             with SMTP(host="smtp.gmail.com", port=587, local_hostname="localhost") as self.connection:
                 self.connection.starttls()
                 self.connection.login(user=self.my_email, password=self.my_password)
                 self.connection.sendmail(from_addr=self.my_email, to_addrs=self.to_email, msg=self.message.as_string())
-
-            popup = tk.Toplevel()
-            popup.title("Email Sent!")
-            popup_label = tk.Label(popup, text=f"Email Sent to {contact['names']}!")
-            popup_label.pack()
-            close_button = tk.Button(popup, text="Close", command=popup.destroy)
-            close_button.pack()
-
-            print(f"Email Sent to {contact['names']}!")
+            print(f"Email Sent to {contact['founder name']}!")
 
 
 # <--------------------------------User Interface----------------------------->
